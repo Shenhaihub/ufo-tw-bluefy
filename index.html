@@ -1,0 +1,432 @@
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport"
+ content="width=device-width,initial-scale=1">
+<title>UFO.TW Controller</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;padding:18px;
+ background:#10141d;color:#eef2ff;
+ font-family:-apple-system,Arial,sans-serif;
+}
+main{max-width:650px;margin:auto}
+h1{font-size:25px;margin-bottom:6px}
+h2{font-size:18px}
+p,small{color:#aeb9ca}
+.card{
+ background:#1b2331;border-radius:16px;
+ padding:17px;margin:15px 0;
+}
+button,select{
+ background:#303e55;color:white;
+ border:0;border-radius:10px;
+ padding:13px;font-size:15px;
+}
+button{margin:4px;cursor:pointer}
+.primary{background:#296fe5}
+.stop{background:#d63245;font-weight:bold}
+input[type=range]{width:100%;accent-color:#75a9ff}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1}
+label{display:block;margin:12px 0 6px}
+select{width:100%}
+#status{
+ padding:12px;background:#283548;
+ border-radius:10px;overflow-wrap:anywhere;
+}
+#sent{font-family:monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>UFO.TW Controller</h1>
+<p>Bluefy · Web Bluetooth · 双转子控制</p>
+
+<div id="status">尚未连接</div>
+<div class="row">
+ <button class="primary" id="connect">连接蓝牙</button>
+ <button id="disconnect">断开连接</button>
+</div>
+<button class="stop" id="stop"
+ style="width:100%">■ 全部停止</button>
+
+<div class="card">
+ <h2>左侧转子</h2>
+ <label>速度：<b id="v1">0</b></label>
+ <input id="s1" type="range"
+  min="0" max="100" value="0">
+ <label>方向</label>
+ <select id="d1">
+  <option value="0">CW 顺时针</option>
+  <option value="1">CCW 逆时针</option>
+ </select>
+</div>
+
+<div class="card">
+ <h2>右侧转子</h2>
+ <label>速度：<b id="v2">0</b></label>
+ <input id="s2" type="range"
+  min="0" max="100" value="0">
+ <label>方向</label>
+ <select id="d2">
+  <option value="0">CW 顺时针</option>
+  <option value="1">CCW 逆时针</option>
+ </select>
+</div>
+
+<div class="card">
+ <h2>运行模式</h2>
+ <label>速度上限：<b id="cv">50</b></label>
+ <input id="cap" type="range"
+  min="10" max="100" value="50">
+
+ <label>选择模式</label>
+ <select id="mode">
+  <option value="">请选择</option>
+  <option value="gentle">01 轻柔 Gentle</option>
+  <option value="wave">02 波浪 Wave</option>
+  <option value="pulse">03 脉冲 Pulse</option>
+  <option value="heartbeat">04 心跳 Heartbeat</option>
+  <option value="breath">05 呼吸 Breath</option>
+  <option value="escalate">06 递增 Escalate</option>
+  <option value="surge">07 冲击 Surge</option>
+  <option value="tease">08 不规则 Tease</option>
+  <option value="storm">09 风暴 Storm</option>
+  <option value="random">10 随机 Random</option>
+  <option value="chase">11 追逐 Chase</option>
+  <option value="mirror">12 镜像 Mirror</option>
+  <option value="alternate">13 左右交替</option>
+  <option value="counter">14 正反换向</option>
+  <option value="tide">15 潮汐 Tide</option>
+  <option value="drift">16 漂移 Drift</option>
+ </select>
+ <div class="row" style="margin-top:12px">
+  <button class="primary" id="play">▶ 播放模式</button>
+  <button id="pause">■ 停止模式</button>
+ </div>
+</div>
+
+<div class="card">
+ <h2>调试信息</h2>
+ <small>最近发送的 HEX 指令</small>
+ <p id="sent">-- -- --</p>
+ <small>写入成功不等于确认实际转速。</small>
+</div>
+</main>
+
+<script>
+const SERVICE =
+ "40ee1111-63ec-4b7f-8ce7-712efd55b90e";
+const TX =
+ "40ee2222-63ec-4b7f-8ce7-712efd55b90e";
+
+const $ = id => document.getElementById(id);
+const num = id => Number($(id).value);
+const wait = ms =>
+ new Promise(resolve => setTimeout(resolve,ms));
+const clamp = (v,lo,hi) =>
+ Math.max(lo,Math.min(hi,Math.round(v)));
+
+let device = null;
+let characteristic = null;
+let epoch = 0;
+let queue = Promise.resolve();
+let last = {a:0,b:0,da:0,db:0};
+let driftA = 25, driftB = 25;
+let manualTimer;
+
+function status(message){
+ $("status").textContent = message;
+}
+
+function encoded(speed,direction){
+ return (direction ? 128 : 0) |
+        clamp(speed,0,100);
+}
+
+async function writeRaw(a,da,b,db){
+ if(!characteristic)
+  throw Error("设备未连接");
+
+ const data = new Uint8Array([
+  0x05,
+  encoded(a,da),
+  encoded(b,db)
+ ]);
+
+ // TW 的公开实现使用 Write With Response
+ if(characteristic.writeValueWithResponse){
+  await characteristic.writeValueWithResponse(data);
+ }else{
+  await characteristic.writeValue(data);
+ }
+
+ $("sent").textContent =
+  Array.from(data)
+   .map(x=>x.toString(16).padStart(2,"0"))
+   .join(" ").toUpperCase();
+}
+
+// 将蓝牙写入串行化，避免同时写入
+function send(a,da,b,db,token=epoch){
+ const job = queue.then(async()=>{
+  if(token!==epoch || !characteristic) return;
+
+  const cap = num("cap");
+  a = clamp(a,0,cap);
+  b = clamp(b,0,cap);
+  da = Number(da);
+  db = Number(db);
+
+  // 运行中换向，先停止再反向
+  const reverse =
+   (last.a>0 && a>0 && last.da!==da) ||
+   (last.b>0 && b>0 && last.db!==db);
+
+  if(reverse){
+   await writeRaw(0,0,0,0);
+   last = {a:0,b:0,da:0,db:0};
+   await wait(250);
+  }
+
+  if(token!==epoch || !characteristic) return;
+  await writeRaw(a,da,b,db);
+  last = {a,b,da,db};
+ });
+
+ queue = job.catch(e=>{
+  status("蓝牙写入失败：" + e.message);
+ });
+ return job;
+}
+
+async function connect(){
+ if(!navigator.bluetooth){
+  status("请使用支持 Web BLE 的 Bluefy 打开 HTTPS 网页");
+  return;
+ }
+ try{
+  // 必须由用户点击触发设备选择
+  device = await navigator.bluetooth.requestDevice({
+   acceptAllDevices:true,
+   optionalServices:[SERVICE]
+  });
+
+  device.addEventListener(
+   "gattserverdisconnected",()=>{
+    epoch++;
+    characteristic = null;
+    last = {a:0,b:0,da:0,db:0};
+    status("蓝牙已断开，请确认实体设备已停止");
+   }
+  );
+
+  const server = await device.gatt.connect();
+  const service =
+   await server.getPrimaryService(SERVICE);
+  characteristic =
+   await service.getCharacteristic(TX);
+
+  status("已连接：" + (device.name || "BLE设备"));
+  await send(0,0,0,0);
+ }catch(e){
+  status("连接失败：" + e.message);
+ }
+}
+
+async function stopAll(){
+ const token = ++epoch;
+ clearTimeout(manualTimer);
+ try{
+  if(characteristic){
+   await send(0,0,0,0,token);
+   status("已发送全部停止指令");
+  }else{
+   status("未连接；如设备仍运行，请使用实体开关");
+  }
+ }catch(e){
+  status("停止失败！请立即使用实体开关：" +
+         e.message);
+ }
+}
+
+async function disconnect(){
+ await stopAll();
+ if(device && device.gatt.connected){
+  device.gatt.disconnect();
+ }
+ characteristic = null;
+ status("已请求断开蓝牙");
+}
+
+function manual(){
+ $("v1").textContent = num("s1");
+ $("v2").textContent = num("s2");
+ const token = ++epoch;
+ clearTimeout(manualTimer);
+ manualTimer = setTimeout(()=>{
+  if(!characteristic) return;
+  send(num("s1"),num("d1"),
+       num("s2"),num("d2"),token)
+   .catch(e=>status(e.message));
+ },100);
+}
+
+// 每项：[左速度,右速度,左方向,右方向,持续毫秒]
+// 速度使用 0-100 相对值
+const patterns = {
+ gentle:[
+  [15,15,0,0,1400],[20,20,0,0,1400],
+  [25,25,0,0,1400],[20,20,0,0,1400]
+ ],
+ wave:[
+  [10,10,0,0,900],[30,30,0,0,900],
+  [50,50,0,0,900],[30,30,0,0,900],
+  [10,10,0,0,900]
+ ],
+ pulse:[
+  [60,60,0,0,500],[0,0,0,0,550],
+  [60,60,0,0,500],[0,0,0,0,850]
+ ],
+ heartbeat:[
+  [35,35,0,0,220],[0,0,0,0,180],
+  [65,65,0,0,300],[0,0,0,0,1100]
+ ],
+ breath:[
+  [10,10,0,0,1400],[20,20,0,0,1400],
+  [35,35,0,0,1400],[20,20,0,0,1400],
+  [10,10,0,0,1400]
+ ],
+ escalate:[
+  [15,15,0,0,1100],[30,30,0,0,1100],
+  [45,45,0,0,1100],[60,60,0,0,1100],
+  [0,0,0,0,700]
+ ],
+ surge:[
+  [15,15,0,0,1600],[75,75,0,0,450],
+  [20,20,0,0,1400],[0,0,0,0,500]
+ ],
+ tease:[
+  [10,10,0,0,1600],[35,35,0,0,450],
+  [0,0,0,0,1000],[20,20,0,0,1000],
+  [0,0,0,0,650]
+ ],
+ storm:[
+  [50,50,0,0,450],[80,70,0,0,450],
+  [60,85,0,0,450],[90,65,0,0,450],
+  [20,20,0,0,700]
+ ],
+ chase:[
+  [55,0,0,0,900],[55,30,0,0,900],
+  [30,55,0,0,900],[0,55,0,0,900],
+  [0,0,0,0,400]
+ ],
+ mirror:[
+  [20,20,0,1,1200],[40,40,0,1,1200],
+  [60,60,0,1,1200],[25,25,0,1,1200]
+ ],
+ alternate:[
+  [50,0,0,0,1100],[0,0,0,0,300],
+  [0,50,0,0,1100],[0,0,0,0,300]
+ ],
+ counter:[
+  [35,35,0,0,1400],[0,0,0,0,400],
+  [35,35,1,1,1400],[0,0,0,0,400]
+ ],
+ tide:[
+  [10,10,0,0,4000],[25,25,0,0,4000],
+  [50,50,0,0,4000],[25,25,0,0,4000],
+  [10,10,0,0,4000]
+ ]
+};
+
+function randomStep(){
+ return [
+  Math.floor(Math.random()*76),
+  Math.floor(Math.random()*76),
+  Math.random()<0.2 ? 1 : 0,
+  Math.random()<0.2 ? 1 : 0,
+  800+Math.floor(Math.random()*1300)
+ ];
+}
+
+function driftStep(){
+ driftA=clamp(driftA+(Math.random()-.5)*18,10,65);
+ driftB=clamp(driftB+(Math.random()-.5)*18,10,65);
+ return [driftA,driftB,0,0,850];
+}
+
+function nextStep(mode,i){
+ if(mode==="random") return randomStep();
+ if(mode==="drift") return driftStep();
+ const steps=patterns[mode];
+ if(!steps) return null;
+ return steps[i%steps.length];
+}
+
+async function play(){
+ if(!characteristic){
+  status("请先连接 UFO.TW");
+  return;
+ }
+ const mode = $("mode").value;
+ if(!mode){
+  status("请先选择模式");
+  return;
+ }
+
+ const token = ++epoch;
+ let i=0;
+ status("正在运行：" + mode);
+
+ while(token===epoch && characteristic){
+  const step=nextStep(mode,i++);
+  if(!step) break;
+
+  const [a,b,da,db,ms]=step;
+  const cap=num("cap");
+
+  try{
+   await send(
+    Math.round(a*cap/100),da,
+    Math.round(b*cap/100),db,token
+   );
+  }catch(e){
+   status("模式写入失败：" + e.message);
+   break;
+  }
+  await wait(ms);
+ }
+
+ // 写入失败时也尝试停止
+ if(token===epoch && characteristic){
+  await stopAll();
+ }
+}
+
+$("connect").onclick=connect;
+$("disconnect").onclick=disconnect;
+$("stop").onclick=stopAll;
+$("pause").onclick=stopAll;
+$("play").onclick=play;
+
+["s1","s2","d1","d2"].forEach(id=>{
+ $(id).addEventListener("input",manual);
+});
+$("cap").addEventListener("input",()=>{
+ $("cv").textContent=num("cap");
+});
+
+// 页面切后台时尽力发送停止；iOS 可能暂停执行
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden && characteristic){
+  stopAll();
+ }
+});
+</script>
+</body>
+</html>
