@@ -1,432 +1,461 @@
-
 <!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport"
- content="width=device-width,initial-scale=1">
-<title>UFO.TW Controller</title>
-<style>
-*{box-sizing:border-box}
-body{
- margin:0;padding:18px;
- background:#10141d;color:#eef2ff;
- font-family:-apple-system,Arial,sans-serif;
-}
-main{max-width:650px;margin:auto}
-h1{font-size:25px;margin-bottom:6px}
-h2{font-size:18px}
-p,small{color:#aeb9ca}
-.card{
- background:#1b2331;border-radius:16px;
- padding:17px;margin:15px 0;
-}
-button,select{
- background:#303e55;color:white;
- border:0;border-radius:10px;
- padding:13px;font-size:15px;
-}
-button{margin:4px;cursor:pointer}
-.primary{background:#296fe5}
-.stop{background:#d63245;font-weight:bold}
-input[type=range]{width:100%;accent-color:#75a9ff}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.row>*{flex:1}
-label{display:block;margin:12px 0 6px}
-select{width:100%}
-#status{
- padding:12px;background:#283548;
- border-radius:10px;overflow-wrap:anywhere;
-}
-#sent{font-family:monospace}
-</style>
-</head>
-<body>
-<main>
-<h1>UFO.TW Controller</h1>
-<p>Bluefy · Web Bluetooth · 双转子控制</p>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="apple-mobile-web-app-capable" content="yes"><title>UFO TW iPhone 控制器</title><style id="ufoStyle">
+  #ufoTwApp{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b101b;color:#e8eefb;padding:18px 10px;border-radius:14px}
+  #ufoTwApp *{box-sizing:border-box}
+  #ufoTwApp .ufo-shell{max-width:780px;margin:0 auto}
+  #ufoTwApp .ufo-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:4px 0 18px}
+  #ufoTwApp .ufo-eyebrow{font-size:10px;letter-spacing:2px;color:#8da8da;font-weight:700}
+  #ufoTwApp h2{font-size:26px;margin:5px 0 3px;font-weight:800}
+  #ufoTwApp .ufo-head p{margin:0;color:#a7b6d0;font-size:12px}
+  #ufoTwApp button,#ufoTwApp select{font:inherit;cursor:pointer}
+  #ufoTwApp button:disabled,#ufoTwApp select:disabled,#ufoTwApp input:disabled{opacity:.38;cursor:not-allowed}
+  #ufoTwApp button{border:0;transition:background .12s}
+  #ufoTwApp .ufo-download{background:#d9e8ff;color:#12254a;border-radius:10px;padding:12px 15px;font-size:13px;font-weight:800;white-space:nowrap}
+  #ufoTwApp .ufo-notice{padding:12px 14px;background:#182c45;border:1px solid #2d4b6d;border-radius:12px;font-size:12px;line-height:1.7;color:#c4d9f6;margin-bottom:12px}
+  #ufoTwApp .ufo-panel{padding:17px;background:#141d2c;border:1px solid #263449;border-radius:15px;margin-bottom:12px}
+  #ufoTwApp .ufo-row{display:flex;align-items:center;gap:12px}
+  #ufoTwApp .ufo-between{justify-content:space-between}
+  #ufoTwApp .ufo-wrap{flex-wrap:wrap}
+  #ufoTwApp .ufo-section-label{font-size:14px;font-weight:800}
+  #ufoTwApp .ufo-status{font-size:12px;color:#a9b8cf;margin-top:5px;max-width:590px;overflow-wrap:anywhere}
+  #ufoTwApp .ufo-dot{height:11px;width:11px;border-radius:50%;background:#788397;flex:none}
+  #ufoTwApp .ufo-dot.connected{background:#43cf9a;box-shadow:0 0 12px #43cf9a66}
+  #ufoTwApp .ufo-actions{display:flex;gap:8px;margin-top:14px}
+  #ufoTwApp .ufo-primary{background:#427ff3;color:white;font-weight:750;padding:13px;border-radius:10px;flex:2}
+  #ufoTwApp .ufo-secondary{background:#2b3b54;color:#e3edff;font-weight:700;padding:13px;border-radius:10px;flex:1}
+  #ufoTwApp .ufo-check{font-size:11px;color:#9fb0c8;display:flex;align-items:center;gap:7px;margin-top:12px}
+  #ufoTwApp input[type=range]{display:block;width:100%;margin:15px 0 7px;accent-color:#659bff;height:23px}
+  #ufoTwApp .ufo-help{font-size:11px;color:#91a2bb;line-height:1.6;margin-top:7px}
+  #ufoTwApp .ufo-rotors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #ufoTwApp .ufo-dir-row{display:flex;gap:7px;margin-top:13px}
+  #ufoTwApp .ufo-dir{flex:1;padding:11px 6px;border-radius:9px;background:#26354d;color:#b7c8e2;font-size:12px;font-weight:700}
+  #ufoTwApp .ufo-dir.selected{background:#2754a3;color:white;outline:1px solid #6199ff}
+  #ufoTwApp select{border:1px solid #3b4b63;border-radius:8px;background:#1e2b40;color:#e8effb;padding:8px 10px;font-size:12px}
+  #ufoTwApp .ufo-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:15px}
+  #ufoTwApp .ufo-mode{background:#22324b;color:#e2ebfb;border:1px solid #304662;border-radius:10px;padding:12px 5px;font-size:12px;font-weight:750;min-height:42px}
+  #ufoTwApp .ufo-mode.active{background:#3566b9;border-color:#8db7ff;color:white}
+  #ufoTwApp .ufo-stop{display:block;width:100%;border-radius:13px;background:#ed4b5b;color:white;padding:19px;font-size:19px;font-weight:900;letter-spacing:.2px}
+  #ufoTwApp .ufo-foot{font-size:10px;line-height:1.7;color:#8193ad;text-align:center;margin:15px 5px}
+  @media(max-width:520px){
+    #ufoTwApp{padding:12px 8px}
+    #ufoTwApp .ufo-head{align-items:flex-start;flex-direction:column}
+    #ufoTwApp .ufo-download{width:100%}
+    #ufoTwApp .ufo-rotors{grid-template-columns:1fr;gap:0}
+    #ufoTwApp .ufo-modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
+</style></head><body style="margin:0;background:#0b101b"><div id="ufoTwApp" data-app-block-stream-enter="">
+  <div class="ufo-shell">
+    <div class="ufo-head">
+      <div>
+        <div class="ufo-eyebrow">IPHONE · WEB BLUETOOTH</div>
+        <h2>UFO TW 控制器</h2>
+        <p>双转子手动控制 · 15 种模式 · 免费单文件网页</p>
+      </div>
+      <button id="ufoDownload" class="ufo-download">↓ 下载 index.html</button>
+    </div>
+    <div class="ufo-notice">这是独立网页版本。请先下载并发布到 HTTPS 网站，再用 iPhone 的 Bluefy 打开。建议首次测试时不要佩戴设备。</div>
+    <section class="ufo-panel">
+      <div class="ufo-row ufo-between">
+        <div>
+          <div class="ufo-section-label">蓝牙连接</div>
+          <div id="ufoStatus" class="ufo-status">尚未连接设备</div>
+        </div>
+        <div id="ufoDot" class="ufo-dot"></div>
+      </div>
+      <div class="ufo-actions">
+        <button id="ufoConnect" class="ufo-primary">连接 UFO TW</button>
+        <button id="ufoDisconnect" class="ufo-secondary" disabled="">断开</button>
+      </div>
+      <label class="ufo-check"><input type="checkbox" id="ufoAllDevices"> 搜索时显示所有蓝牙设备（找不到 UFO TW 时使用）</label>
+    </section>
+    <section class="ufo-panel">
+      <div class="ufo-row ufo-between">
+        <div class="ufo-section-label">最高速度限制</div>
+        <strong><span id="ufoCapText">30</span>%</strong>
+      </div>
+      <input id="ufoCap" type="range" min="0" max="100" value="30">
+      <div class="ufo-help">手动速度不得超过此上限；运行模式会按此上限等比缩放。</div>
+    </section>
+    <div class="ufo-rotors">
+      <section class="ufo-panel">
+        <div class="ufo-row ufo-between"><div class="ufo-section-label" data-app-block-stream-enter="">转子 A</div><strong id="ufoValueA" data-app-block-stream-enter="">0%</strong></div>
+        <input id="ufoSpeedA" type="range" min="0" max="100" value="0" data-control="" data-app-block-stream-enter="" disabled="">
+        <div class="ufo-dir-row" data-app-block-stream-enter="">
+          <button class="ufo-dir selected" data-rotor="0" data-dir="0" data-control="" disabled="">↻ 顺时针</button>
+          <button class="ufo-dir" data-rotor="0" data-dir="1" data-control="" data-app-block-stream-enter="" disabled="">↺ 逆时针</button>
+        </div>
+      </section>
+      <section class="ufo-panel" data-app-block-stream-enter="">
+        <div class="ufo-row ufo-between"><div class="ufo-section-label">转子 B</div><strong id="ufoValueB">0%</strong></div>
+        <input id="ufoSpeedB" type="range" min="0" max="100" value="0" data-control="" data-app-block-stream-enter="" disabled="">
+        <div class="ufo-dir-row" data-app-block-stream-enter="">
+          <button class="ufo-dir selected" data-rotor="1" data-dir="0" data-control="" disabled="">↻ 顺时针</button>
+          <button class="ufo-dir" data-rotor="1" data-dir="1" data-control="" data-app-block-stream-enter="" disabled="">↺ 逆时针</button>
+        </div>
+      </section>
+    </div>
+    <section class="ufo-panel" data-app-block-stream-enter="">
+      <div class="ufo-row ufo-between ufo-wrap" data-app-block-stream-enter="">
+        <div class="ufo-section-label">运行模式 · 15 种</div>
+        <select id="ufoTarget" data-control="" disabled="">
+          <option value="both">双转子</option>
+          <option value="a">仅转子 A</option>
+          <option value="b">仅转子 B</option>
+        </select>
+      </div>
+      <div id="ufoModes" class="ufo-modes" data-app-block-stream-enter=""></div>
+      <div class="ufo-help" data-app-block-stream-enter="">“追逐”和“镜像”会自动控制双转子。模式均可随时手动中断。</div>
+    </section>
+    <section class="ufo-panel" data-app-block-stream-enter="">
+      <div class="ufo-row ufo-between">
+        <div class="ufo-section-label">自动停止计时</div>
+        <select id="ufoTimeout">
+          <option value="5" data-app-block-stream-enter="">5 分钟</option>
+          <option value="10" selected="" data-app-block-stream-enter="">10 分钟</option>
+          <option value="15" data-app-block-stream-enter="">15 分钟</option>
+          <option value="30" data-app-block-stream-enter="">30 分钟</option>
+        </select>
+      </div>
+      <div class="ufo-help" data-app-block-stream-enter="">从开始运行时计时。切换到后台也会尝试发送停止指令，但蓝牙断开或系统暂停网页时不能保证成功。</div>
+    </section>
+    <button id="ufoStop" class="ufo-stop" data-app-block-stream-enter="">■ 全部停止 STOP ALL</button>
+    <p class="ufo-foot" data-app-block-stream-enter="">协议依据：openunagi/ufotw · 非官方控制器 · 不包含加热控制 · 请保留实体电源开关作为最终停止手段</p>
+  </div>
+</div><script id="ufoScript">
+(function(){
+  const app=document.getElementById('ufoTwApp');
+  if(!app||app.dataset.ready==='1')return;
+  app.dataset.ready='1';
+  const $=s=>app.querySelector(s);
+  const SERVICE='40ee1111-63ec-4b7f-8ce7-712efd55b90e';
+  const TX='40ee2222-63ec-4b7f-8ce7-712efd55b90e';
+  const specs=[
+    ['gentle','舒缓'],['breath','呼吸'],['tease','挑逗'],
+    ['surge','爆发'],['pulse','脉冲'],['heartbeat','心跳'],
+    ['escalate','渐强'],['wave','波浪'],['chase','追逐'],
+    ['mirror','镜像'],['constant','恒定'],['slow','慢爬升'],
+    ['gentleLong','舒缓·长周期'],['seeded','随机（可复现）'],
+    ['lowRandom','低速随机池']
+  ];
+  // 前八种和舒缓长周期依据 openunagi/ufotw 中的 JSON 模式。
+  // 其余为网页组合或自定义模式。
+  const raw={
+    gentle:'8/0/1.5,18/0/1.5,28/0/2,38/0/2,28/0/1.5,18/1/1.5,28/1/2,38/1/2,28/1/1.5,15/0/1.2,8/0/1',
+    breath:'0/0/.8,15/0/1.4,35/0/1.4,55/0/1.4,35/0/1.4,15/0/1.4,0/0/.8',
+    tease:'30/0/1.2,65/0/.6,95/0/.4,65/0/.3,30/0/.25,8/0/.2,0/0/2,45/1/.5,85/1/.4,50/1/.25,15/1/.2,0/0/2.5',
+    surge:'100/0/.35,20/0/.25,100/0/.35,20/0/.25,100/0/.55,40/0/.2,12/0/.15,0/0/.75',
+    pulse:'90/0/.22,0/0/.28,90/0/.22,0/0/.28,90/0/.22,0/0/.8',
+    heartbeat:'100/0/.12,30/0/.12,80/0/.12,0/0/.9',
+    escalate:'10/0/1,25/0/.8,45/0/.6,65/0/.5,85/0/.4,100/0/1.5,75/0/.35,45/0/.3,20/0/.25,8/0/.2',
+    wave:'25/0/.35,55/0/.35,85/0/.45,55/0/.35,25/1/.35,55/1/.35,85/1/.45,55/1/.35',
+    gentleLong:'0/0/1,8/0/2,14/0/2.5,20/0/2.5,26/0/2,20/0/2,12/1/2,18/1/2.5,24/1/2,18/1/2,10/0/1.5,0/0/1',
+    constant:'50/0/10',
+    slow:'5/0/2,10/0/2,15/0/2,20/0/2,25/0/2,30/0/2,35/0/2,40/0/2,45/0/2,50/0/2,25/0/2,0/0/2',
+    lowRandom:'8/0/1,18/1/1.5,12/0/1,25/1/.8,6/0/1.2,20/0/1,14/1/1.4,0/0/.8'
+  };
+  let seed=20261015;
+  const rnd=()=>{
+    seed=(Math.imul(seed,1664525)+1013904223)>>>0;
+    return seed/4294967296;
+  };
+  const randomSteps=Array.from({length:24},()=>({
+    s:Math.round(10+rnd()*80),d:rnd()>.5?1:0,t:Math.round(500+rnd()*1000)
+  }));
+  const parse=str=>str.split(',').map(v=>{
+    const [s,d,t]=v.split('/').map(Number);
+    return {s,d,t:Math.max(100,Math.round(t*1000))};
+  });
+  const patterns={};
+  for(const [k,v] of Object.entries(raw))patterns[k]=parse(v);
+  patterns.seeded=randomSteps;
 
-<div id="status">尚未连接</div>
-<div class="row">
- <button class="primary" id="connect">连接蓝牙</button>
- <button id="disconnect">断开连接</button>
-</div>
-<button class="stop" id="stop"
- style="width:100%">■ 全部停止</button>
+  const state={
+    device:null,char:null,queue:Promise.resolve(),epoch:0,
+    rotors:[{speed:0,dir:0},{speed:0,dir:0}],
+    mode:null,modeStart:0,modeTimer:null,manualTimer:null,
+    safetyTimer:null,connecting:false
+  };
+  const connected=()=>!!(state.char&&state.device&&state.device.gatt&&state.device.gatt.connected);
+  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+  const cap=()=>Number($('#ufoCap').value);
+  const status=(msg)=>{$('#ufoStatus').textContent=msg;};
 
-<div class="card">
- <h2>左侧转子</h2>
- <label>速度：<b id="v1">0</b></label>
- <input id="s1" type="range"
-  min="0" max="100" value="0">
- <label>方向</label>
- <select id="d1">
-  <option value="0">CW 顺时针</option>
-  <option value="1">CCW 逆时针</option>
- </select>
-</div>
-
-<div class="card">
- <h2>右侧转子</h2>
- <label>速度：<b id="v2">0</b></label>
- <input id="s2" type="range"
-  min="0" max="100" value="0">
- <label>方向</label>
- <select id="d2">
-  <option value="0">CW 顺时针</option>
-  <option value="1">CCW 逆时针</option>
- </select>
-</div>
-
-<div class="card">
- <h2>运行模式</h2>
- <label>速度上限：<b id="cv">50</b></label>
- <input id="cap" type="range"
-  min="10" max="100" value="50">
-
- <label>选择模式</label>
- <select id="mode">
-  <option value="">请选择</option>
-  <option value="gentle">01 轻柔 Gentle</option>
-  <option value="wave">02 波浪 Wave</option>
-  <option value="pulse">03 脉冲 Pulse</option>
-  <option value="heartbeat">04 心跳 Heartbeat</option>
-  <option value="breath">05 呼吸 Breath</option>
-  <option value="escalate">06 递增 Escalate</option>
-  <option value="surge">07 冲击 Surge</option>
-  <option value="tease">08 不规则 Tease</option>
-  <option value="storm">09 风暴 Storm</option>
-  <option value="random">10 随机 Random</option>
-  <option value="chase">11 追逐 Chase</option>
-  <option value="mirror">12 镜像 Mirror</option>
-  <option value="alternate">13 左右交替</option>
-  <option value="counter">14 正反换向</option>
-  <option value="tide">15 潮汐 Tide</option>
-  <option value="drift">16 漂移 Drift</option>
- </select>
- <div class="row" style="margin-top:12px">
-  <button class="primary" id="play">▶ 播放模式</button>
-  <button id="pause">■ 停止模式</button>
- </div>
-</div>
-
-<div class="card">
- <h2>调试信息</h2>
- <small>最近发送的 HEX 指令</small>
- <p id="sent">-- -- --</p>
- <small>写入成功不等于确认实际转速。</small>
-</div>
-</main>
-
-<script>
-const SERVICE =
- "40ee1111-63ec-4b7f-8ce7-712efd55b90e";
-const TX =
- "40ee2222-63ec-4b7f-8ce7-712efd55b90e";
-
-const $ = id => document.getElementById(id);
-const num = id => Number($(id).value);
-const wait = ms =>
- new Promise(resolve => setTimeout(resolve,ms));
-const clamp = (v,lo,hi) =>
- Math.max(lo,Math.min(hi,Math.round(v)));
-
-let device = null;
-let characteristic = null;
-let epoch = 0;
-let queue = Promise.resolve();
-let last = {a:0,b:0,da:0,db:0};
-let driftA = 25, driftB = 25;
-let manualTimer;
-
-function status(message){
- $("status").textContent = message;
-}
-
-function encoded(speed,direction){
- return (direction ? 128 : 0) |
-        clamp(speed,0,100);
-}
-
-async function writeRaw(a,da,b,db){
- if(!characteristic)
-  throw Error("设备未连接");
-
- const data = new Uint8Array([
-  0x05,
-  encoded(a,da),
-  encoded(b,db)
- ]);
-
- // TW 的公开实现使用 Write With Response
- if(characteristic.writeValueWithResponse){
-  await characteristic.writeValueWithResponse(data);
- }else{
-  await characteristic.writeValue(data);
- }
-
- $("sent").textContent =
-  Array.from(data)
-   .map(x=>x.toString(16).padStart(2,"0"))
-   .join(" ").toUpperCase();
-}
-
-// 将蓝牙写入串行化，避免同时写入
-function send(a,da,b,db,token=epoch){
- const job = queue.then(async()=>{
-  if(token!==epoch || !characteristic) return;
-
-  const cap = num("cap");
-  a = clamp(a,0,cap);
-  b = clamp(b,0,cap);
-  da = Number(da);
-  db = Number(db);
-
-  // 运行中换向，先停止再反向
-  const reverse =
-   (last.a>0 && a>0 && last.da!==da) ||
-   (last.b>0 && b>0 && last.db!==db);
-
-  if(reverse){
-   await writeRaw(0,0,0,0);
-   last = {a:0,b:0,da:0,db:0};
-   await wait(250);
+  function render(){
+    const on=connected();
+    $('#ufoDot').classList.toggle('connected',on);
+    $('#ufoConnect').disabled=on||state.connecting;
+    $('#ufoDisconnect').disabled=!on;
+    app.querySelectorAll('[data-control]').forEach(el=>el.disabled=!on);
+    $('#ufoCapText').textContent=cap();
+    for(let i=0;i<2;i++){
+      const r=state.rotors[i];
+      $('#ufoSpeed'+(i?'B':'A')).value=r.speed;
+      $('#ufoValue'+(i?'B':'A')).textContent=r.speed+'%';
+      app.querySelectorAll('[data-rotor="'+i+'"]').forEach(b=>{
+        b.classList.toggle('selected',Number(b.dataset.dir)===r.dir);
+      });
+    }
+    app.querySelectorAll('[data-mode]').forEach(b=>{
+      b.classList.toggle('active',b.dataset.mode===state.mode);
+    });
   }
 
-  if(token!==epoch || !characteristic) return;
-  await writeRaw(a,da,b,db);
-  last = {a,b,da,db};
- });
+  // 按实际实现发送 [0x05, 转子A方向+速度, 转子B方向+速度]。
+  function queueWrite(){
+    const ch=state.char;
+    if(!connected())return Promise.resolve(false);
+    const bytes=new Uint8Array([
+      0x05,
+      (state.rotors[0].dir<<7)|clamp(state.rotors[0].speed,0,100),
+      (state.rotors[1].dir<<7)|clamp(state.rotors[1].speed,0,100)
+    ]);
+    const epoch=state.epoch;
+    state.queue=state.queue.catch(()=>false).then(async()=>{
+      if(epoch!==state.epoch||ch!==state.char||!connected())return false;
+      try{
+        if(ch.properties.write&&ch.writeValueWithResponse){
+          await ch.writeValueWithResponse(bytes);
+        }else if(ch.properties.writeWithoutResponse&&ch.writeValueWithoutResponse){
+          await ch.writeValueWithoutResponse(bytes);
+        }else{
+          await ch.writeValue(bytes);
+        }
+        return true;
+      }catch(err){
+        status('发送失败：'+(err.message||String(err)));
+        return false;
+      }
+    });
+    return state.queue;
+  }
 
- queue = job.catch(e=>{
-  status("蓝牙写入失败：" + e.message);
- });
- return job;
-}
+  function stopMode(){
+    if(state.modeTimer!==null)clearInterval(state.modeTimer);
+    state.modeTimer=null;
+    state.mode=null;
+    state.epoch++;
+  }
+  function cancelSafety(){
+    if(state.safetyTimer!==null)clearTimeout(state.safetyTimer);
+    state.safetyTimer=null;
+  }
+  function armSafety(){
+    if(state.safetyTimer!==null)return;
+    const ms=Number($('#ufoTimeout').value)*60000;
+    state.safetyTimer=setTimeout(()=>{
+      state.safetyTimer=null;
+      stopAll();
+      status('自动停止计时已结束，已尝试发送停止指令');
+    },ms);
+  }
+  function sendSoon(){
+    if(state.manualTimer!==null)clearTimeout(state.manualTimer);
+    state.manualTimer=setTimeout(()=>{
+      state.manualTimer=null;
+      queueWrite();
+    },70);
+  }
+  async function stopAll(){
+    if(state.manualTimer!==null)clearTimeout(state.manualTimer);
+    state.manualTimer=null;
+    stopMode();
+    cancelSafety();
+    state.rotors=[{speed:0,dir:0},{speed:0,dir:0}];
+    render();
+    if(!connected()){
+      status('当前未连接。若设备仍在运行，请使用实体电源开关停止');
+      return;
+    }
+    const ok=await queueWrite();
+    if(ok)status('已发送双转子停止指令');
+  }
 
-async function connect(){
- if(!navigator.bluetooth){
-  status("请使用支持 Web BLE 的 Bluefy 打开 HTTPS 网页");
-  return;
- }
- try{
-  // 必须由用户点击触发设备选择
-  device = await navigator.bluetooth.requestDevice({
-   acceptAllDevices:true,
-   optionalServices:[SERVICE]
+  function sample(name,elapsed){
+    const arr=patterns[name];
+    if(!arr||!arr.length)return {s:0,d:0,t:1000};
+    const total=arr.reduce((sum,v)=>sum+v.t,0);
+    let p=elapsed%total;
+    for(const step of arr){
+      if(p<step.t)return step;
+      p-=step.t;
+    }
+    return arr[arr.length-1];
+  }
+  function scaled(step){
+    return {speed:clamp(Math.round(step.s*cap()/100),0,100),dir:step.d};
+  }
+  function tick(){
+    if(!state.mode||!connected())return;
+    const elapsed=performance.now()-state.modeStart;
+    const next=state.rotors.map(r=>({...r}));
+    if(state.mode==='chase'){
+      next[0]=scaled(sample('escalate',elapsed));
+      next[1]=scaled(sample('pulse',elapsed));
+    }else if(state.mode==='mirror'){
+      const a=scaled(sample('wave',elapsed));
+      next[0]=a;
+      next[1]={speed:a.speed,dir:1-a.dir};
+    }else{
+      const v=scaled(sample(state.mode,elapsed));
+      const target=$('#ufoTarget').value;
+      if(target==='both'||target==='a')next[0]={...v};
+      if(target==='both'||target==='b')next[1]={...v};
+    }
+    if(next.some((v,i)=>v.speed!==state.rotors[i].speed||v.dir!==state.rotors[i].dir)){
+      state.rotors=next;
+      render();
+      queueWrite();
+    }
+  }
+  function startMode(name){
+    if(!connected())return status('请先连接 UFO TW');
+    stopMode();
+    state.mode=name;
+    state.modeStart=performance.now();
+    state.modeTimer=setInterval(tick,100);
+    armSafety();
+    tick();
+    render();
+    const label=specs.find(x=>x[0]===name)?.[1]||name;
+    status('正在运行：'+label);
+  }
+
+  async function connect(){
+    if(state.connecting||connected())return;
+    if(!navigator.bluetooth||!navigator.bluetooth.requestDevice){
+      status('此浏览器没有 Web Bluetooth。请在 iPhone 的 Bluefy 中打开 HTTPS 网页');
+      return;
+    }
+    state.connecting=true;
+    render();
+    status('请选择 UFO TW 蓝牙设备…');
+    try{
+      const options=$('#ufoAllDevices').checked
+        ?{acceptAllDevices:true,optionalServices:[SERVICE]}
+        :{filters:[{namePrefix:'UFO'}],optionalServices:[SERVICE]};
+      const device=await navigator.bluetooth.requestDevice(options);
+      state.device=device;
+      device.addEventListener('gattserverdisconnected',()=>{
+        stopMode();
+        cancelSafety();
+        state.char=null;
+        state.rotors=[{speed:0,dir:0},{speed:0,dir:0}];
+        render();
+        status('蓝牙已断开；无法确认设备是否停止，请检查实体设备');
+      });
+      status('正在连接 '+(device.name||'蓝牙设备')+'…');
+      const server=await device.gatt.connect();
+      const service=await server.getPrimaryService(SERVICE);
+      state.char=await service.getCharacteristic(TX);
+      state.epoch++;
+      state.rotors=[{speed:0,dir:0},{speed:0,dir:0}];
+      const ok=await queueWrite();
+      status(ok?'已连接 '+(device.name||'UFO TW')+'，已发送初始停止指令':'蓝牙已连接，但初始停止指令发送失败');
+    }catch(err){
+      state.char=null;
+      if(state.device?.gatt?.connected)state.device.gatt.disconnect();
+      state.device=null;
+      status('连接失败：'+(err.message||String(err)));
+    }finally{
+      state.connecting=false;
+      render();
+    }
+  }
+  async function disconnect(){
+    await stopAll();
+    if(state.device?.gatt?.connected)state.device.gatt.disconnect();
+    state.char=null;
+    state.device=null;
+    render();
+    status('已断开蓝牙连接');
+  }
+  function manual(i,changes){
+    stopMode();
+    state.rotors[i]={...state.rotors[i],...changes};
+    if(state.rotors[i].speed>0)armSafety();
+    else if(state.rotors.every(r=>r.speed===0))cancelSafety();
+    render();
+    sendSoon();
+  }
+
+  $('#ufoModes').innerHTML='';
+  for(const [key,label] of specs){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='ufo-mode';
+    b.dataset.mode=key;
+    b.dataset.control='';
+    b.textContent=label;
+    $('#ufoModes').appendChild(b);
+  }
+  $('#ufoModes').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');
+    if(b&&!b.disabled)startMode(b.dataset.mode);
+  });
+  $('#ufoConnect').addEventListener('click',connect);
+  $('#ufoDisconnect').addEventListener('click',disconnect);
+  $('#ufoStop').addEventListener('click',stopAll);
+  for(let i=0;i<2;i++){
+    $('#ufoSpeed'+(i?'B':'A')).addEventListener('input',e=>{
+      const v=Math.min(Number(e.target.value),cap());
+      manual(i,{speed:v});
+    });
+  }
+  app.querySelectorAll('[data-rotor][data-dir]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      manual(Number(b.dataset.rotor),{dir:Number(b.dataset.dir)});
+    });
+  });
+  $('#ufoCap').addEventListener('input',()=>{
+    $('#ufoCapText').textContent=cap();
+    if(state.mode){
+      tick();
+    }else{
+      let changed=false;
+      state.rotors.forEach(r=>{
+        if(r.speed>cap()){r.speed=cap();changed=true;}
+      });
+      render();
+      if(changed)sendSoon();
+    }
+  });
+  $('#ufoTarget').addEventListener('change',()=>{if(state.mode)tick();});
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden&&connected()&&(state.mode||state.rotors.some(r=>r.speed>0)))stopAll();
+  });
+  window.addEventListener('pagehide',()=>{
+    if(connected())stopAll();
   });
 
-  device.addEventListener(
-   "gattserverdisconnected",()=>{
-    epoch++;
-    characteristic = null;
-    last = {a:0,b:0,da:0,db:0};
-    status("蓝牙已断开，请确认实体设备已停止");
-   }
-  );
-
-  const server = await device.gatt.connect();
-  const service =
-   await server.getPrimaryService(SERVICE);
-  characteristic =
-   await service.getCharacteristic(TX);
-
-  status("已连接：" + (device.name || "BLE设备"));
-  await send(0,0,0,0);
- }catch(e){
-  status("连接失败：" + e.message);
- }
-}
-
-async function stopAll(){
- const token = ++epoch;
- clearTimeout(manualTimer);
- try{
-  if(characteristic){
-   await send(0,0,0,0,token);
-   status("已发送全部停止指令");
-  }else{
-   status("未连接；如设备仍运行，请使用实体开关");
+  // 生成完全独立的 HTML 文件，不依赖 CDN 或其他文件。
+  $('#ufoDownload').addEventListener('click',()=>{
+    const clone=app.cloneNode(true);
+    clone.removeAttribute('data-ready');
+    const modes=clone.querySelector('#ufoModes');
+    if(modes)modes.innerHTML='';
+    const style=document.getElementById('ufoStyle').outerHTML;
+    const logic=document.getElementById('ufoScript').textContent;
+    const file='<!doctype html>\n<html lang="zh-CN"><head><meta charset="utf-8">'
+      +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+      +'<meta name="apple-mobile-web-app-capable" content="yes">'
+      +'<title>UFO TW iPhone 控制器</title>'
+      +style+'</head><body style="margin:0;background:#0b101b">'
+      +clone.outerHTML
+      +'<scr'+'ipt id="ufoScript">'+logic+'</scr'+'ipt>'
+      +'</body></html>';
+    const blob=new Blob([file],{type:'text/html;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download='index.html';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+  });
+  render();
+  if(!navigator.bluetooth){
+    status('预览环境不支持蓝牙；请下载 index.html 并在 Bluefy 中打开 HTTPS 地址');
   }
- }catch(e){
-  status("停止失败！请立即使用实体开关：" +
-         e.message);
- }
-}
-
-async function disconnect(){
- await stopAll();
- if(device && device.gatt.connected){
-  device.gatt.disconnect();
- }
- characteristic = null;
- status("已请求断开蓝牙");
-}
-
-function manual(){
- $("v1").textContent = num("s1");
- $("v2").textContent = num("s2");
- const token = ++epoch;
- clearTimeout(manualTimer);
- manualTimer = setTimeout(()=>{
-  if(!characteristic) return;
-  send(num("s1"),num("d1"),
-       num("s2"),num("d2"),token)
-   .catch(e=>status(e.message));
- },100);
-}
-
-// 每项：[左速度,右速度,左方向,右方向,持续毫秒]
-// 速度使用 0-100 相对值
-const patterns = {
- gentle:[
-  [15,15,0,0,1400],[20,20,0,0,1400],
-  [25,25,0,0,1400],[20,20,0,0,1400]
- ],
- wave:[
-  [10,10,0,0,900],[30,30,0,0,900],
-  [50,50,0,0,900],[30,30,0,0,900],
-  [10,10,0,0,900]
- ],
- pulse:[
-  [60,60,0,0,500],[0,0,0,0,550],
-  [60,60,0,0,500],[0,0,0,0,850]
- ],
- heartbeat:[
-  [35,35,0,0,220],[0,0,0,0,180],
-  [65,65,0,0,300],[0,0,0,0,1100]
- ],
- breath:[
-  [10,10,0,0,1400],[20,20,0,0,1400],
-  [35,35,0,0,1400],[20,20,0,0,1400],
-  [10,10,0,0,1400]
- ],
- escalate:[
-  [15,15,0,0,1100],[30,30,0,0,1100],
-  [45,45,0,0,1100],[60,60,0,0,1100],
-  [0,0,0,0,700]
- ],
- surge:[
-  [15,15,0,0,1600],[75,75,0,0,450],
-  [20,20,0,0,1400],[0,0,0,0,500]
- ],
- tease:[
-  [10,10,0,0,1600],[35,35,0,0,450],
-  [0,0,0,0,1000],[20,20,0,0,1000],
-  [0,0,0,0,650]
- ],
- storm:[
-  [50,50,0,0,450],[80,70,0,0,450],
-  [60,85,0,0,450],[90,65,0,0,450],
-  [20,20,0,0,700]
- ],
- chase:[
-  [55,0,0,0,900],[55,30,0,0,900],
-  [30,55,0,0,900],[0,55,0,0,900],
-  [0,0,0,0,400]
- ],
- mirror:[
-  [20,20,0,1,1200],[40,40,0,1,1200],
-  [60,60,0,1,1200],[25,25,0,1,1200]
- ],
- alternate:[
-  [50,0,0,0,1100],[0,0,0,0,300],
-  [0,50,0,0,1100],[0,0,0,0,300]
- ],
- counter:[
-  [35,35,0,0,1400],[0,0,0,0,400],
-  [35,35,1,1,1400],[0,0,0,0,400]
- ],
- tide:[
-  [10,10,0,0,4000],[25,25,0,0,4000],
-  [50,50,0,0,4000],[25,25,0,0,4000],
-  [10,10,0,0,4000]
- ]
-};
-
-function randomStep(){
- return [
-  Math.floor(Math.random()*76),
-  Math.floor(Math.random()*76),
-  Math.random()<0.2 ? 1 : 0,
-  Math.random()<0.2 ? 1 : 0,
-  800+Math.floor(Math.random()*1300)
- ];
-}
-
-function driftStep(){
- driftA=clamp(driftA+(Math.random()-.5)*18,10,65);
- driftB=clamp(driftB+(Math.random()-.5)*18,10,65);
- return [driftA,driftB,0,0,850];
-}
-
-function nextStep(mode,i){
- if(mode==="random") return randomStep();
- if(mode==="drift") return driftStep();
- const steps=patterns[mode];
- if(!steps) return null;
- return steps[i%steps.length];
-}
-
-async function play(){
- if(!characteristic){
-  status("请先连接 UFO.TW");
-  return;
- }
- const mode = $("mode").value;
- if(!mode){
-  status("请先选择模式");
-  return;
- }
-
- const token = ++epoch;
- let i=0;
- status("正在运行：" + mode);
-
- while(token===epoch && characteristic){
-  const step=nextStep(mode,i++);
-  if(!step) break;
-
-  const [a,b,da,db,ms]=step;
-  const cap=num("cap");
-
-  try{
-   await send(
-    Math.round(a*cap/100),da,
-    Math.round(b*cap/100),db,token
-   );
-  }catch(e){
-   status("模式写入失败：" + e.message);
-   break;
-  }
-  await wait(ms);
- }
-
- // 写入失败时也尝试停止
- if(token===epoch && characteristic){
-  await stopAll();
- }
-}
-
-$("connect").onclick=connect;
-$("disconnect").onclick=disconnect;
-$("stop").onclick=stopAll;
-$("pause").onclick=stopAll;
-$("play").onclick=play;
-
-["s1","s2","d1","d2"].forEach(id=>{
- $(id).addEventListener("input",manual);
-});
-$("cap").addEventListener("input",()=>{
- $("cv").textContent=num("cap");
-});
-
-// 页面切后台时尽力发送停止；iOS 可能暂停执行
-document.addEventListener("visibilitychange",()=>{
- if(document.hidden && characteristic){
-  stopAll();
- }
-});
-</script>
-</body>
-</html>
+})();
+</script></body></html>
